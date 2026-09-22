@@ -105,7 +105,7 @@ flowchart LR
     end
 
     subgraph RUNTIME["RUNTIME / HOSTING"]
-        GP["GitHub Pages<br/>willoudev.github.io/Whiteboard/"]
+        GP["GitHub Pages<br/>willoudev.github.io/whiteboard/"]
         RR["Render service<br/>excalidraw-room-n6sz.onrender.com"]
     end
 
