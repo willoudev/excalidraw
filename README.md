@@ -20,6 +20,11 @@
   </h2>
 </div>
 
+> **This is a self-hosted fork.** This repository is a clone of the upstream
+> [excalidraw/excalidraw](https://github.com/excalidraw/excalidraw) project,
+> adapted to be self-hosted on GitHub Pages with a private collaboration
+> server. See [Architecture](#architecture) below for how it's deployed.
+
 <br />
 <p align="center">
   <a href="https://github.com/excalidraw/excalidraw/blob/master/LICENSE">
@@ -79,6 +84,55 @@ The app hosted at [excalidraw.com](https://excalidraw.com) is a minimal showcase
 - 🔗&nbsp;Shareable links (export to a readonly link you can share with others).
 
 We'll be adding these features as drop-in plugins for the npm package in the future.
+
+## Architecture
+
+This fork is deployed as a static app on GitHub Pages, with real-time
+collaboration handled by a separate [excalidraw-room](https://github.com/willoudev/excalidraw-room)
+instance hosted on [Render](https://render.com). Both are built and deployed
+automatically on every push to `main`.
+
+```mermaid
+flowchart LR
+    subgraph SRC["SOURCE (GitHub)"]
+        R1[["willoudev/excalidraw<br/>(main)"]]
+        R2[["willoudev/excalidraw-room<br/>(main)"]]
+    end
+
+    subgraph BUILD["BUILD / DEPLOY"]
+        GA["GitHub Actions<br/>deploy-pages.yml<br/>yarn build:app"]
+        RB["Render<br/>Docker build<br/>node:20-alpine"]
+    end
+
+    subgraph RUNTIME["RUNTIME / HOSTING"]
+        GP["GitHub Pages<br/>willoudev.github.io/excalidraw/"]
+        RR["Render service<br/>excalidraw-room-n6sz.onrender.com"]
+    end
+
+    subgraph CLIENT["CLIENT"]
+        U["User Browser<br/>Excalidraw canvas"]
+    end
+
+    R1 -- git push --> GA --> GP
+    R2 -- git push --> RB --> RR
+    GP -- "HTTPS GET (serves static app)" --> U
+    RR <-- "WebSocket, E2E-encrypted scene sync (room key stays in URL fragment, never sent to server)" --> U
+```
+
+Compared to upstream, this fork carries a few self-hosting patches:
+
+- `excalidraw-app/vite.config.mts` — sets `base: "/excalidraw/"` so assets
+  resolve correctly on a GitHub Pages project site.
+- `packages/excalidraw/data/filesystem.ts` — adds a manual-download fallback
+  in `fileSave` for browsers where the native File System Access API is
+  detected as supported but blocked at runtime (e.g. by an enterprise
+  device policy), instead of failing outright.
+- `.env.production` — points `VITE_APP_WS_SERVER_URL` at our own
+  `excalidraw-room` instance instead of Excalidraw's own collab server.
+- `.github/workflows/deploy-pages.yml` — builds and deploys the app to
+  GitHub Pages on every push to `main`.
+- The Excalidraw+ promo button and the Excalidraw+/GitHub/Follow
+  us/Discord/Sign up entries have been removed from the app's UI.
 
 ## Quick start
 
