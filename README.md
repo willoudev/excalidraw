@@ -95,7 +95,7 @@ automatically on every push to `main`.
 ```mermaid
 flowchart LR
     subgraph SRC["SOURCE (GitHub)"]
-        R1[["willoudev/excalidraw<br/>(main)"]]
+        R1[["willoudev/whiteboard<br/>(main)"]]
         R2[["willoudev/excalidraw-room<br/>(main)"]]
     end
 
@@ -121,8 +121,11 @@ flowchart LR
 
 Compared to upstream, this fork carries a few self-hosting patches:
 
-- `excalidraw-app/vite.config.mts` — sets `base: "/excalidraw/"` so assets
-  resolve correctly on a GitHub Pages project site.
+- `excalidraw-app/vite.config.mts` — sets `base: "/whiteboard/"` (must match
+  the GitHub repo name exactly, including case) so assets resolve correctly
+  on a GitHub Pages project site.
+- `excalidraw-app/index.html` — page title changed from "Excalidraw
+  Whiteboard" to "Whiteboard".
 - `packages/excalidraw/data/filesystem.ts` — adds a manual-download fallback
   in `fileSave` for browsers where the native File System Access API is
   detected as supported but blocked at runtime (e.g. by an enterprise
@@ -131,8 +134,11 @@ Compared to upstream, this fork carries a few self-hosting patches:
   `excalidraw-room` instance instead of Excalidraw's own collab server.
 - `.github/workflows/deploy-pages.yml` — builds and deploys the app to
   GitHub Pages on every push to `main`.
-- The Excalidraw+ promo button and the Excalidraw+/GitHub/Follow
-  us/Discord/Sign up entries have been removed from the app's UI.
+- The Excalidraw+ promo button, the floating help ("?") button, and the
+  end-to-end-encryption shield icon have been removed from the canvas UI.
+- The hamburger menu no longer lists Excalidraw+, GitHub, Follow us,
+  Discord, or Sign up. The welcome screen no longer lists Sign up, and its
+  "EXCALIDRAW" wordmark now reads "WHITEBOARD".
 
 ## Quick start
 
