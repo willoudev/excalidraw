@@ -1,10 +1,8 @@
 import clsx from "clsx";
 
-import { actionShortcuts } from "../../actions";
 import { useTunnels } from "../../context/tunnels";
 import { ExitZenModeButton, UndoRedoActions, ZoomActions } from "../Actions";
 import { useApp } from "../App";
-import { HelpButton } from "../HelpButton";
 import { Section } from "../Section";
 import Stack from "../Stack";
 
@@ -26,7 +24,7 @@ const Footer = ({
   defaultUIEnabled: boolean;
   zoomUIEnabled: boolean;
 }) => {
-  const { FooterCenterTunnel, WelcomeScreenHelpHintTunnel } = useTunnels();
+  const { FooterCenterTunnel } = useTunnels();
   const app = useApp();
 
   return (
@@ -64,25 +62,6 @@ const Footer = ({
         </div>
       )}
       <FooterCenterTunnel.Out />
-      {(defaultUIEnabled || renderWelcomeScreen) && (
-        <div
-          className={clsx(
-            "layer-ui__wrapper__footer-right zen-mode-transition",
-            {
-              "transition-right": appState.zenModeEnabled,
-            },
-          )}
-        >
-          <div style={{ position: "relative" }}>
-            {renderWelcomeScreen && <WelcomeScreenHelpHintTunnel.Out />}
-            {defaultUIEnabled && (
-              <HelpButton
-                onClick={() => actionManager.executeAction(actionShortcuts)}
-              />
-            )}
-          </div>
-        </div>
-      )}
       {defaultUIEnabled && (
         <ExitZenModeButton
           actionManager={actionManager}
