@@ -1076,22 +1076,7 @@ const ExcalidrawWrapper = () => {
           <Collab excalidrawAPI={excalidrawAPI} />
         )}
 
-        <ShareDialog
-          collabAPI={collabAPI}
-          onExportToBackend={async () => {
-            if (excalidrawAPI) {
-              try {
-                await onExportToBackend(
-                  excalidrawAPI.getSceneElements(),
-                  excalidrawAPI.getAppState(),
-                  excalidrawAPI.getFiles(),
-                );
-              } catch (error: any) {
-                setErrorMessage(error.message);
-              }
-            }
-          }}
-        />
+        <ShareDialog collabAPI={collabAPI} />
 
         <AppSidebar />
 

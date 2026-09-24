@@ -6,6 +6,20 @@ sur laquelle ce fork est basé (`packages/excalidraw/package.json`), et
 `Custom-X.Y.Z` suit nos propres changements par-dessus. `Custom` repart à
 `1.0.0` à chaque fois que la base Excalidraw est resynchronisée.
 
+## Excalidraw-0.18.0+Custom-1.2.0 — 2026-09-24
+
+- Retrait du "Lien partageable" (export readonly vers le backend
+  officiel d'Excalidraw) dans la boîte de dialogue de collaboration ;
+  remplacé par une liste des sessions actives :
+  - "Mes sessions actives" : sessions démarrées/rejointes depuis ce
+    navigateur (historique local) et encore actives, cliquables pour
+    les rejoindre directement
+  - "Toutes les sessions actives sur le serveur" : IDs de room +
+    nombre de participants, informatif (aucune clé de chiffrement
+    n'est jamais exposée par le serveur)
+  - Nouvel endpoint `GET /rooms` sur `excalidraw-room` listant les
+    rooms Socket.IO actives
+
 ## Excalidraw-0.18.0+Custom-1.1.1 — 2026-09-24
 
 - Correction : "Ouvrir un fichier" (`fileOpen`) échouait sur certains

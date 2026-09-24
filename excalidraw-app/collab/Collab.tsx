@@ -86,6 +86,7 @@ import {
   importUsernameFromLocalStorage,
   saveUsernameToLocalStorage,
 } from "../data/localStorage";
+import { recordSessionLink } from "../data/SessionHistory";
 import { resetBrowserStateVersions } from "../data/tabSync";
 
 import { collabErrorIndicatorAtom } from "./CollabError";
@@ -707,6 +708,7 @@ class Collab extends PureComponent<CollabProps, CollabState> {
     this.initializeIdleDetector();
 
     this.setActiveRoomLink(window.location.href);
+    recordSessionLink(window.location.href);
 
     return scenePromise;
   };
