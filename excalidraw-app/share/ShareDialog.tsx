@@ -155,21 +155,38 @@ const ActiveRoomDialog = ({
           {t("roomDialog.desc_privacy")}
         </p>
         <p>{t("roomDialog.desc_exitSession")}</p>
+        <p>
+          "Fermer pour tout le monde" met en revanche fin à la session pour
+          tous les participants connectés.
+        </p>
       </div>
 
-      <div className="ShareDialog__active__actions">
+      <div
+        className="ShareDialog__active__actions"
+        style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}
+      >
+        <FilledButton
+          size="large"
+          variant="outlined"
+          label="Sortir"
+          onClick={() => {
+            trackEvent("share", "room left");
+            collabAPI.stopCollaboration(false);
+            if (!collabAPI.isCollaborating()) {
+              handleClose();
+            }
+          }}
+        />
         <FilledButton
           size="large"
           variant="outlined"
           color="danger"
-          label={t("roomDialog.button_stopSession")}
+          label="Fermer pour tout le monde"
           icon={playerStopFilledIcon}
           onClick={() => {
-            trackEvent("share", "room closed");
-            collabAPI.stopCollaboration();
-            if (!collabAPI.isCollaborating()) {
-              handleClose();
-            }
+            trackEvent("share", "room closed for everyone");
+            collabAPI.closeRoomForEveryone();
+            handleClose();
           }}
         />
       </div>

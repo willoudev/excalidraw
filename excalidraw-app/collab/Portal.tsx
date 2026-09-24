@@ -56,8 +56,20 @@ class Portal {
     this.socket.on("room-user-change", (clients: SocketId[]) => {
       this.collab.setCollaborators(clients);
     });
+    this.socket.on("room-closed", () => {
+      this.collab.onRoomClosed();
+    });
 
     return socket;
+  }
+
+  /** Tells the server to broadcast "room-closed" to every socket currently
+   * in this room, including this one — everyone reacts the same way via
+   * the "room-closed" listener above. */
+  closeRoom() {
+    if (this.socket && this.roomId) {
+      this.socket.emit("close-room", this.roomId);
+    }
   }
 
   close() {

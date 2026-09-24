@@ -120,6 +120,7 @@ export interface CollabAPI {
   onPointerUpdate: CollabInstance["onPointerUpdate"];
   startCollaboration: CollabInstance["startCollaboration"];
   stopCollaboration: CollabInstance["stopCollaboration"];
+  closeRoomForEveryone: CollabInstance["closeRoomForEveryone"];
   syncElements: CollabInstance["syncElements"];
   fetchImageFilesFromFirebase: CollabInstance["fetchImageFilesFromFirebase"];
   setUsername: CollabInstance["setUsername"];
@@ -242,6 +243,7 @@ class Collab extends PureComponent<CollabProps, CollabState> {
       syncElements: this.syncElements,
       fetchImageFilesFromFirebase: this.fetchImageFilesFromFirebase,
       stopCollaboration: this.stopCollaboration,
+      closeRoomForEveryone: this.closeRoomForEveryone,
       setUsername: this.setUsername,
       getUsername: this.getUsername,
       getActiveRoomLink: this.getActiveRoomLink,
@@ -363,7 +365,11 @@ class Collab extends PureComponent<CollabProps, CollabState> {
     }
   };
 
-  stopCollaboration = (keepRemoteState = true) => {
+  /** flushes local state and disconnects, without touching the URL or the
+   * remote room — used both when just leaving a session (room stays alive
+   * for other participants) and as the shared "before disconnect" step for
+   * closing the room for everyone (see onRoomClosed below). */
+  private flushAndDisconnect = () => {
     this.queueBroadcastAllElements.cancel();
     this.queueSaveToFirebase.cancel();
     this.loadImageFiles.cancel();
@@ -381,37 +387,72 @@ class Collab extends PureComponent<CollabProps, CollabState> {
         this.fallbackInitializationHandler,
       );
     }
+  };
+
+  /** Leaves the session but keeps the room itself alive — other
+   * participants (and this browser, if it reopens the link later) are
+   * unaffected. This is also used internally on navigation away from a
+   * collab link. */
+  stopCollaboration = (keepRemoteState = true) => {
+    this.flushAndDisconnect();
 
     if (!keepRemoteState) {
       LocalData.fileStorage.reset();
       this.destroySocketClient();
     } else if (window.confirm(t("alerts.collabStopOverridePrompt"))) {
-      // hack to ensure that we prefer we disregard any new browser state
-      // that could have been saved in other tabs while we were collaborating
-      resetBrowserStateVersions();
+      this.onRoomClosed();
+    }
+  };
 
-      window.history.pushState(
-        {},
-        APP_NAME,
-        `${window.location.origin}${import.meta.env.BASE_URL}`,
-      );
-      this.destroySocketClient();
+  /** Detaches the local scene from the room and clears the room link from
+   * the URL, without prompting. Runs both for the participant who closes
+   * the room for everyone and — via the "room-closed" broadcast — for
+   * every other participant still connected. */
+  onRoomClosed = () => {
+    // flush pending saves/broadcasts in case this fired from the socket
+    // event (other participants haven't gone through stopCollaboration)
+    this.flushAndDisconnect();
 
-      LocalData.fileStorage.reset();
+    // hack to ensure that we prefer we disregard any new browser state
+    // that could have been saved in other tabs while we were collaborating
+    resetBrowserStateVersions();
 
-      const elements = this.excalidrawAPI
-        .getSceneElementsIncludingDeleted()
-        .map((element) => {
-          if (isImageElement(element) && element.status === "saved") {
-            return newElementWith(element, { status: "pending" });
-          }
-          return element;
-        });
+    window.history.pushState(
+      {},
+      APP_NAME,
+      `${window.location.origin}${import.meta.env.BASE_URL}`,
+    );
+    this.destroySocketClient();
 
-      this.excalidrawAPI.updateScene({
-        elements,
-        captureUpdate: CaptureUpdateAction.NEVER,
+    LocalData.fileStorage.reset();
+
+    const elements = this.excalidrawAPI
+      .getSceneElementsIncludingDeleted()
+      .map((element) => {
+        if (isImageElement(element) && element.status === "saved") {
+          return newElementWith(element, { status: "pending" });
+        }
+        return element;
       });
+
+    this.excalidrawAPI.updateScene({
+      elements,
+      captureUpdate: CaptureUpdateAction.NEVER,
+    });
+  };
+
+  /** Closes the room for every connected participant, not just this
+   * browser. Broadcasts a "room-closed" signal via the collab server;
+   * each participant (including this one, once the signal echoes back)
+   * then runs onRoomClosed(). */
+  closeRoomForEveryone = () => {
+    if (
+      window.confirm(
+        "Fermer la session mettra fin à la collaboration pour tous les participants connectés. Continuer ?",
+      )
+    ) {
+      this.flushAndDisconnect();
+      this.portal.closeRoom();
     }
   };
 

@@ -6,6 +6,19 @@ sur laquelle ce fork est basé (`packages/excalidraw/package.json`), et
 `Custom-X.Y.Z` suit nos propres changements par-dessus. `Custom` repart à
 `1.0.0` à chaque fois que la base Excalidraw est resynchronisée.
 
+## Excalidraw-0.18.0+Custom-1.4.0 — 2026-09-24
+
+- Dans "Collaboration en direct", remplacement du bouton unique
+  "Arrêter la session" par deux actions distinctes :
+  - **Sortir** : quitte la session localement, la room reste active
+    pour les autres participants (et on peut la rejoindre plus tard
+    via le même lien)
+  - **Fermer pour tout le monde** : met fin à la session pour tous
+    les participants connectés, via un nouvel événement
+    `close-room`/`room-closed` sur `excalidraw-room` (broadcast à
+    tous les sockets de la room, y compris l'émetteur, pour une
+    déconnexion uniforme)
+
 ## Excalidraw-0.18.0+Custom-1.3.1 — 2026-09-24
 
 - Correction : "Arrêter la session" (collaboration) ramenait à
