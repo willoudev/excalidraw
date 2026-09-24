@@ -6,6 +6,15 @@ sur laquelle ce fork est basé (`packages/excalidraw/package.json`), et
 `Custom-X.Y.Z` suit nos propres changements par-dessus. `Custom` repart à
 `1.0.0` à chaque fois que la base Excalidraw est resynchronisée.
 
+## Excalidraw-0.18.0+Custom-1.3.1 — 2026-09-24
+
+- Correction : "Arrêter la session" (collaboration) ramenait à
+  `willoudev.github.io` (racine) au lieu de
+  `willoudev.github.io/whiteboard/`, car le code d'origine réécrivait
+  l'URL avec `window.location.origin` seul, sans le `base` path du
+  site. Utilise maintenant `import.meta.env.BASE_URL`
+  (`excalidraw-app/collab/Collab.tsx`).
+
 ## Excalidraw-0.18.0+Custom-1.3.0 — 2026-09-24
 
 - Ajout d'une section "Toutes les sessions enregistrées (Firestore)"
