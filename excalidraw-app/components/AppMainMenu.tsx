@@ -7,6 +7,7 @@ import { isDevEnv } from "@excalidraw/common";
 import type { Theme } from "@excalidraw/element/types";
 
 import { LanguageList } from "../app-language/LanguageList";
+import { APP_VERSION } from "../app_constants";
 
 import { saveDebugState } from "./DebugCanvas";
 
@@ -57,6 +58,21 @@ export const AppMainMenu: React.FC<{
         <LanguageList style={{ width: "100%" }} />
       </MainMenu.ItemCustom>
       <MainMenu.DefaultItems.ChangeCanvasBackground />
+      <MainMenu.Separator />
+      <MainMenu.ItemCustom>
+        <div
+          style={{
+            width: "100%",
+            textAlign: "center",
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.05em",
+            color: "var(--color-gray-40)",
+          }}
+        >
+          v{APP_VERSION}
+        </div>
+      </MainMenu.ItemCustom>
     </MainMenu>
   );
 });

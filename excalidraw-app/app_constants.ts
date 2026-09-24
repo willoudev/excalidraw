@@ -59,3 +59,6 @@ export const COOKIES = {
 export const isExcalidrawPlusSignedUser = document.cookie.includes(
   COOKIES.AUTH_STATE_COOKIE,
 );
+
+// bump on every user-facing change and add an entry to CHANGELOG.md
+export const APP_VERSION = "1.0.0";

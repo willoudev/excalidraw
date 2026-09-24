@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { APP_VERSION } from "../app_constants";
+
 // ═══ CODE D'ACCÈS ═══════════════════════════════════════════════
 // Même mécanisme que macroplanning : le mot de passe n'est jamais stocké
 // en clair, seul son hash PBKDF2-SHA256 (310 000 itérations) est comparé
@@ -260,7 +262,7 @@ export const AccessGate: React.FC<{ children: React.ReactNode }> = ({
           {checking ? "⏳ Vérification..." : "Accéder"}
         </button>
         <p style={{ color: "#5a5957", fontSize: 10, margin: "16px 0 0 0" }}>
-          Accès sécurisé
+          v{APP_VERSION} &mdash; Accès sécurisé
         </p>
       </div>
     </div>
