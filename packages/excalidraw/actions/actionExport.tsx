@@ -1,6 +1,7 @@
 import { KEYS, THEME } from "@excalidraw/common";
 
 import { CaptureUpdateAction } from "@excalidraw/element";
+import { syncInvalidIndices } from "@excalidraw/element/fractionalIndex";
 
 import type { ExcalidrawElement, Theme } from "@excalidraw/element/types";
 
@@ -406,6 +407,19 @@ export const actionLoadScene = register({
         appState: loadedAppState,
         files,
       } = await loadFromJSON(appState, elements);
+
+      // while collaborating, opening a file imports it into the shared
+      // scene instead of replacing it outright — otherwise it would wipe
+      // out what every other participant has drawn
+      if (app.props.isCollaborating) {
+        return {
+          elements: syncInvalidIndices(elements.concat(loadedElements)),
+          appState: { ...appState, ...loadedAppState },
+          files: { ...app.files, ...files },
+          captureUpdate: CaptureUpdateAction.IMMEDIATELY,
+        };
+      }
+
       return {
         elements: loadedElements,
         appState: loadedAppState,

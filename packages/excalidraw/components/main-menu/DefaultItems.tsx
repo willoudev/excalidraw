@@ -71,13 +71,18 @@ export const LoadScene = () => {
   const { t } = useI18n();
   const actionManager = useExcalidrawActionManager();
   const elements = useExcalidrawElements();
+  const appProps = useAppProps();
 
   if (!actionManager.isActionEnabled(actionLoadScene)) {
     return null;
   }
 
   const handleSelect = async () => {
+    // while collaborating, opening a file imports it into the shared
+    // scene instead of replacing it (see actionLoadScene), so the
+    // "this will overwrite your drawing" warning no longer applies
     if (
+      appProps.isCollaborating ||
       !elements.length ||
       (await openConfirmModal({
         title: t("overwriteConfirm.modal.loadFromFile.title"),

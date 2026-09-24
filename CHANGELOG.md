@@ -6,6 +6,17 @@ sur laquelle ce fork est basé (`packages/excalidraw/package.json`), et
 `Custom-X.Y.Z` suit nos propres changements par-dessus. `Custom` repart à
 `1.0.0` à chaque fois que la base Excalidraw est resynchronisée.
 
+## Excalidraw-0.18.0+Custom-1.5.0 — 2026-09-24
+
+- "Ouvrir un fichier" (`Ctrl/Cmd+O` et menu) importe désormais le
+  contenu du fichier dans la scène partagée au lieu de la remplacer,
+  lorsqu'une session de collaboration est active — sinon ça écrasait
+  le dessin de tous les participants. Comportement inchangé hors
+  collaboration. La confirmation "ceci va écraser votre dessin" ne
+  s'affiche plus dans ce cas puisqu'elle ne s'applique plus
+  (`packages/excalidraw/actions/actionExport.tsx`,
+  `packages/excalidraw/components/main-menu/DefaultItems.tsx`).
+
 ## Excalidraw-0.18.0+Custom-1.4.0 — 2026-09-24
 
 - Dans "Collaboration en direct", remplacement du bouton unique
