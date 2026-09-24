@@ -12,6 +12,8 @@ import {
   getFirestore,
   doc,
   getDoc,
+  getDocs,
+  collection,
   runTransaction,
   Bytes,
 } from "firebase/firestore";
@@ -269,6 +271,29 @@ export const loadFromFirebase = async (
   }
 
   return elements;
+};
+
+export type StoredRoom = {
+  roomId: string;
+  sceneVersion: number;
+};
+
+/**
+ * Lists every room that has scene data persisted in Firestore, regardless
+ * of whether it currently has connected collaborators. Only the room ID
+ * (the document ID) and scene version are readable without the room's
+ * encryption key — the content itself stays encrypted and unreadable here.
+ * Requires the Firestore security rules on the `scenes` collection to
+ * permit a collection-level `list`, not just per-document `get`; if they
+ * don't, this throws and callers should handle that gracefully.
+ */
+export const listStoredRooms = async (): Promise<StoredRoom[]> => {
+  const firestore = _getFirestore();
+  const snapshot = await getDocs(collection(firestore, "scenes"));
+  return snapshot.docs.map((docSnap) => {
+    const data = docSnap.data() as FirebaseStoredScene;
+    return { roomId: docSnap.id, sceneVersion: data.sceneVersion };
+  });
 };
 
 export const loadFilesFromFirebase = async (

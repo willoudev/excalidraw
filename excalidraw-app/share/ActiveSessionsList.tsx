@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { useI18n } from "@excalidraw/excalidraw/i18n";
 
+import { listStoredRooms, type StoredRoom } from "../data/firebase";
 import {
   getSessionHistory,
   type SessionHistoryEntry,
@@ -30,6 +31,11 @@ export const ActiveSessionsList = () => {
   const { t } = useI18n();
   const [activeRooms, setActiveRooms] = useState<ActiveRoom[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [storedRooms, setStoredRooms] = useState<StoredRoom[] | null>(null);
+  const [storedRoomsError, setStoredRoomsError] = useState<string | null>(
+    null,
+  );
+  const [storedRoomsLoading, setStoredRoomsLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,6 +45,23 @@ export const ActiveSessionsList = () => {
         setLoading(false);
       }
     });
+    listStoredRooms()
+      .then((rooms) => {
+        if (!cancelled) {
+          setStoredRooms(rooms);
+          setStoredRoomsLoading(false);
+        }
+      })
+      .catch((error: any) => {
+        if (!cancelled) {
+          setStoredRoomsError(
+            error?.code === "permission-denied"
+              ? "Accès refusé par les règles de sécurité Firestore (lister la collection entière n'est pas autorisé, seule la lecture par ID connu l'est)."
+              : "Impossible de lister les sessions enregistrées.",
+          );
+          setStoredRoomsLoading(false);
+        }
+      });
     return () => {
       cancelled = true;
     };
@@ -123,6 +146,64 @@ export const ActiveSessionsList = () => {
                 </div>
               </li>
             ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="ActiveSessionsList__section">
+        <div className="ActiveSessionsList__header">
+          Toutes les sessions enregistrées (Firestore)
+        </div>
+        <div className="ActiveSessionsList__empty" style={{ marginBottom: 4 }}>
+          Le contenu reste chiffré : seuls l'ID et le numéro de version sont
+          lisibles sans la clé de chiffrement (dans le lien de la session).
+        </div>
+        {storedRoomsLoading ? (
+          <div className="ActiveSessionsList__loading">
+            {t("labels.loadingScene")}
+          </div>
+        ) : storedRoomsError ? (
+          <div className="ActiveSessionsList__error">{storedRoomsError}</div>
+        ) : storedRooms && storedRooms.length === 0 ? (
+          <div className="ActiveSessionsList__empty">
+            Aucune session enregistrée.
+          </div>
+        ) : (
+          <ul className="ActiveSessionsList__list">
+            {storedRooms?.map((room) => {
+              const known = getSessionHistory().find(
+                (entry) => entry.roomId === room.roomId,
+              );
+              return (
+                <li key={room.roomId}>
+                  {known ? (
+                    <button
+                      type="button"
+                      className="ActiveSessionsList__item ActiveSessionsList__item--clickable"
+                      onClick={() => {
+                        window.location.href = known.link;
+                      }}
+                    >
+                      <span className="ActiveSessionsList__item__name">
+                        {room.roomId.slice(0, 8)}…
+                      </span>
+                      <span className="ActiveSessionsList__item__count">
+                        v{room.sceneVersion}
+                      </span>
+                    </button>
+                  ) : (
+                    <div className="ActiveSessionsList__item">
+                      <span className="ActiveSessionsList__item__name">
+                        {room.roomId.slice(0, 8)}…
+                      </span>
+                      <span className="ActiveSessionsList__item__count">
+                        v{room.sceneVersion}
+                      </span>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

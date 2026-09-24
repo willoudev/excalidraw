@@ -6,6 +6,17 @@ sur laquelle ce fork est basé (`packages/excalidraw/package.json`), et
 `Custom-X.Y.Z` suit nos propres changements par-dessus. `Custom` repart à
 `1.0.0` à chaque fois que la base Excalidraw est resynchronisée.
 
+## Excalidraw-0.18.0+Custom-1.3.0 — 2026-09-24
+
+- Ajout d'une section "Toutes les sessions enregistrées (Firestore)"
+  dans le popup Partager, listant tous les rooms ayant des données
+  persistées (ID + version de scène uniquement — le contenu reste
+  chiffré et illisible sans la clé, absente de Firestore). Si les
+  règles de sécurité Firestore bloquent le listing de la collection
+  (get par ID connu autorisé, mais pas list), un message explicite
+  s'affiche plutôt que de planter (`excalidraw-app/data/firebase.ts`,
+  `listStoredRooms`).
+
 ## Excalidraw-0.18.0+Custom-1.2.0 — 2026-09-24
 
 - Retrait du "Lien partageable" (export readonly vers le backend
