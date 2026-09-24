@@ -60,5 +60,13 @@ export const isExcalidrawPlusSignedUser = document.cookie.includes(
   COOKIES.AUTH_STATE_COOKIE,
 );
 
-// bump on every user-facing change and add an entry to CHANGELOG.md
-export const APP_VERSION = "1.0.0";
+// version of upstream excalidraw/excalidraw this fork is based on
+// (see packages/excalidraw/package.json); bump only when re-syncing
+// with a newer upstream release
+export const EXCALIDRAW_BASE_VERSION = "0.18.0";
+
+// bump on every user-facing customization and add an entry to
+// CHANGELOG.md; reset to 1.0.0 if EXCALIDRAW_BASE_VERSION is bumped
+export const CUSTOM_VERSION = "1.0.0";
+
+export const APP_VERSION = `Excalidraw-${EXCALIDRAW_BASE_VERSION}+Custom-${CUSTOM_VERSION}`;

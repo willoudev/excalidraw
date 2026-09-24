@@ -262,7 +262,7 @@ export const AccessGate: React.FC<{ children: React.ReactNode }> = ({
           {checking ? "⏳ Vérification..." : "Accéder"}
         </button>
         <p style={{ color: "#5a5957", fontSize: 10, margin: "16px 0 0 0" }}>
-          v{APP_VERSION} &mdash; Accès sécurisé
+          {APP_VERSION} &mdash; Accès sécurisé
         </p>
       </div>
     </div>

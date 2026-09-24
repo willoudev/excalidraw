@@ -64,13 +64,13 @@ export const AppMainMenu: React.FC<{
           style={{
             width: "100%",
             textAlign: "center",
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: 700,
-            letterSpacing: "0.05em",
+            letterSpacing: "0.03em",
             color: "var(--color-gray-40)",
           }}
         >
-          v{APP_VERSION}
+          {APP_VERSION}
         </div>
       </MainMenu.ItemCustom>
     </MainMenu>
