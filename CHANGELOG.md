@@ -6,6 +6,13 @@ sur laquelle ce fork est basé (`packages/excalidraw/package.json`), et
 `Custom-X.Y.Z` suit nos propres changements par-dessus. `Custom` repart à
 `1.0.0` à chaque fois que la base Excalidraw est resynchronisée.
 
+## Excalidraw-0.18.0+Custom-1.1.0 — 2026-09-24
+
+- Retrait des balises Open Graph / Twitter Card / meta description
+  (`excalidraw-app/index.html`) : les liens partagés n'affichent plus
+  de prévisualisation enrichie "Excalidraw — Collaborative
+  whiteboarding made easy" pointant vers excalidraw.com
+
 ## Excalidraw-0.18.0+Custom-1.0.0 — 2026-09-24
 
 Première version suivie de ce fork self-hosted d'Excalidraw, regroupant
