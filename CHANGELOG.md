@@ -6,6 +6,16 @@ sur laquelle ce fork est basé (`packages/excalidraw/package.json`), et
 `Custom-X.Y.Z` suit nos propres changements par-dessus. `Custom` repart à
 `1.0.0` à chaque fois que la base Excalidraw est resynchronisée.
 
+## Excalidraw-0.18.0+Custom-1.1.1 — 2026-09-24
+
+- Correction : "Ouvrir un fichier" (`fileOpen`) échouait sur certains
+  navigateurs (ex. Edge sur macOS) avec `Failed to execute
+  'showOpenFilePicker' ... not allowed by the user agent or the
+  platform`, quand l'API File System Access est détectée comme
+  supportée mais bloquée au runtime. Même correctif que pour la
+  sauvegarde : bascule automatique vers un `<input type="file">`
+  classique dans ce cas (`packages/excalidraw/data/filesystem.ts`).
+
 ## Excalidraw-0.18.0+Custom-1.1.0 — 2026-09-24
 
 - Retrait des balises Open Graph / Twitter Card / meta description

@@ -10,6 +10,48 @@ import { normalizeFile } from "./blob";
 
 type FILE_EXTENSION = Exclude<keyof typeof MIME_TYPES, "binary">;
 
+/**
+ * Manually opens a file via a hidden <input type="file">, bypassing the
+ * native File System Access API entirely. Used as a fallback when that API
+ * is reported as available but its use is blocked at runtime (e.g. by a
+ * device/enterprise policy), which surfaces as a `NotAllowedError` instead
+ * of the graceful "unsupported" path browsers without the API take.
+ * Mirrors browser-fs-access's own (untyped, so not importable) legacy
+ * fallback: 'cancel' rejects with the same AbortError native pickers throw,
+ * 'change' resolves with the selected file(s).
+ */
+const legacyFileOpen = (opts: {
+  mimeTypes?: string[];
+  extensions?: string[];
+  multiple?: boolean;
+}): Promise<File | File[]> => {
+  return new Promise((resolve, reject) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.multiple = opts.multiple ?? false;
+    input.accept = [...(opts.mimeTypes ?? []), ...(opts.extensions ?? [])].join(
+      ",",
+    );
+    input.style.display = "none";
+    document.body.appendChild(input);
+    input.addEventListener("cancel", () => {
+      input.remove();
+      reject(new DOMException("The user aborted a request.", "AbortError"));
+    });
+    input.addEventListener("change", () => {
+      input.remove();
+      resolve(
+        input.multiple ? Array.from(input.files ?? []) : input.files![0],
+      );
+    });
+    if ("showPicker" in HTMLInputElement.prototype) {
+      (input as any).showPicker();
+    } else {
+      input.click();
+    }
+  });
+};
+
 export const fileOpen = async <M extends boolean | undefined = false>(opts: {
   extensions?: FILE_EXTENSION[];
   description: string;
@@ -31,12 +73,28 @@ export const fileOpen = async <M extends boolean | undefined = false>(opts: {
     return acc.concat(`.${ext}`);
   }, [] as string[]);
 
-  const files = await _fileOpen({
-    description: opts.description,
-    extensions,
-    mimeTypes,
-    multiple: opts.multiple ?? false,
-  });
+  let files: File | File[];
+  try {
+    files = await _fileOpen({
+      description: opts.description,
+      extensions,
+      mimeTypes,
+      multiple: opts.multiple ?? false,
+    });
+  } catch (error: any) {
+    if (error?.name === "NotAllowedError" || error?.name === "SecurityError") {
+      // the native picker is blocked at runtime despite being detected as
+      // supported — fall back to a plain <input type="file"> instead of
+      // failing outright
+      files = await legacyFileOpen({
+        mimeTypes,
+        extensions,
+        multiple: opts.multiple,
+      });
+    } else {
+      throw error;
+    }
+  }
 
   if (Array.isArray(files)) {
     return (await Promise.all(
