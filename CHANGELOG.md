@@ -6,6 +6,26 @@ sur laquelle ce fork est basé (`packages/excalidraw/package.json`), et
 `Custom-X.Y.Z` suit nos propres changements par-dessus. `Custom` repart à
 `1.0.0` à chaque fois que la base Excalidraw est resynchronisée.
 
+## Excalidraw-0.18.0+Custom-1.9.1 — 2026-09-25
+
+- Refonte du mindmap inséré par "Insérer un mindmap" pour ressembler à
+  un vrai mindmap (façon Miro/Mural) plutôt qu'à un flowchart : les
+  nœuds sont maintenant du texte libre (plus de bulles/formes autour),
+  reliés par des branches courbes colorées par thème, avec une
+  hiérarchie sur 2 niveaux (sujet central → 4 branches → 2
+  sous-branches chacune).
+  ⚠️ Corrige au passage un bug découvert pendant la refonte : lier une
+  flèche (`start`/`end` du skeleton) à un élément texte libre déjà
+  existant via son `id` fait que `convertToExcalidrawElements`
+  recalcule et écrase la position de ce texte avec une formule qui
+  ignore l'autre extrémité de la flèche — plusieurs nœuds du mindmap
+  se retrouvaient superposés au même endroit. Les connecteurs du
+  mindmap sont donc désormais dessinés directement aux bonnes
+  coordonnées plutôt que liés par `id` à des éléments texte
+  (`excalidraw-app/data/templates.ts`) ; en contrepartie ils ne suivent
+  plus automatiquement un nœud qu'on déplacerait à la main (comme
+  n'importe quelle flèche non liée).
+
 ## Excalidraw-0.18.0+Custom-1.9.0 — 2026-09-25
 
 - Ajout de deux entrées dans le menu hamburger pour insérer des
