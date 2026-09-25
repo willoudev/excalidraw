@@ -6,6 +6,24 @@ sur laquelle ce fork est basé (`packages/excalidraw/package.json`), et
 `Custom-X.Y.Z` suit nos propres changements par-dessus. `Custom` repart à
 `1.0.0` à chaque fois que la base Excalidraw est resynchronisée.
 
+## Excalidraw-0.18.0+Custom-1.9.0 — 2026-09-25
+
+- Ajout de deux entrées dans le menu hamburger pour insérer des
+  structures prêtes à l'emploi, centrées sur la zone actuellement
+  visible du canevas :
+  - **Insérer un kanban** : 3 colonnes ("À faire" / "En cours" /
+    "Terminé") avec des cartes exemples (sticky notes) dedans.
+  - **Insérer un mindmap** : un sujet central relié à 4 branches, dont
+    une avec deux sous-branches, pour illustrer la hiérarchie.
+  Implémenté avec `convertToExcalidrawElements` (le même mécanisme que
+  la conversion Mermaid → Excalidraw déjà présente dans l'éditeur) :
+  ce sont des formes Excalidraw normales et éditables (déplacer,
+  redimensionner, changer les couleurs, ajouter/retirer des
+  cartes/branches à la main), pas un outil Kanban ou Mindmap
+  interactif à part entière avec son propre état
+  (`excalidraw-app/data/templates.ts`,
+  `excalidraw-app/components/AppMainMenu.tsx`).
+
 ## Excalidraw-0.18.0+Custom-1.8.0 — 2026-09-25
 
 - Les sessions listées dans "Toutes les sessions actives sur le
