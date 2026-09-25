@@ -6,6 +6,24 @@ sur laquelle ce fork est basé (`packages/excalidraw/package.json`), et
 `Custom-X.Y.Z` suit nos propres changements par-dessus. `Custom` repart à
 `1.0.0` à chaque fois que la base Excalidraw est resynchronisée.
 
+## Excalidraw-0.18.0+Custom-1.7.1 — 2026-09-25
+
+- Correction : `GET /rooms` (`excalidraw-room`) listait les sessions
+  d'après les sockets Socket.IO actuellement connectés au lieu du
+  registre des rooms créées via `create-room`. Conséquence : dès que
+  plus personne n'était connecté à une room (ex. après "Sortir"), elle
+  disparaissait de "Mes sessions actives" — impossible d'y revenir en
+  cliquant dessus, alors qu'elle restait pourtant ouverte/rejoignable
+  côté serveur. `/rooms` se base maintenant sur le registre (le nombre
+  de participants peut retomber à 0 sans que la session ne disparaisse
+  de la liste) (`excalidraw-room/src/index.ts`).
+  ⚠️ Si le popup "Session partagée fermée" ne s'affiche toujours pas
+  sur un lien de room fermée après ce correctif, vérifier que le
+  service `excalidraw-room` sur Render a bien redéployé le commit
+  précédent (`00b22b1`, protocole `create-room`/`join-room`) : sans
+  lui, le serveur accepte encore silencieusement n'importe quel
+  `join-room`.
+
 ## Excalidraw-0.18.0+Custom-1.7.0 — 2026-09-25
 
 - Refonte de la collaboration en direct :
