@@ -110,6 +110,11 @@ interface CollabState {
 }
 
 export const activeRoomLinkAtom = atom<string | null>(null);
+export const activeRoomInfoAtom = atom<{
+  name: string;
+  creatorName: string;
+} | null>(null);
+export const roomNotFoundAtom = atom(false);
 export const userToFollowAtom = atom<UserToFollow | null>(null);
 
 type CollabInstance = InstanceType<typeof Collab>;
@@ -441,6 +446,25 @@ class Collab extends PureComponent<CollabProps, CollabState> {
     });
   };
 
+  /** Runs when the server rejects "join-room" because the room was never
+   * created, or was already closed — e.g. a stale/incorrect share link.
+   * Cleans up the attempted connection (nothing was ever joined, so
+   * there's nothing to save) and surfaces the "room closed" popup instead
+   * of leaving the app stuck on an empty, unreachable scene. */
+  onRoomNotFound = () => {
+    this.destroySocketClient();
+    window.history.replaceState(
+      {},
+      APP_NAME,
+      `${window.location.origin}${import.meta.env.BASE_URL}`,
+    );
+    appJotaiStore.set(roomNotFoundAtom, true);
+  };
+
+  setRoomInfo = (info: { name: string; creatorName: string } | null) => {
+    appJotaiStore.set(activeRoomInfoAtom, info);
+  };
+
   /** Closes the room for every connected participant, not just this
    * browser. Broadcasts a "room-closed" signal via the collab server;
    * each participant (including this one, once the signal echoes back)
@@ -464,6 +488,7 @@ class Collab extends PureComponent<CollabProps, CollabState> {
     if (!opts?.isUnload) {
       this.setIsCollaborating(false);
       this.setActiveRoomLink(null);
+      appJotaiStore.set(activeRoomInfoAtom, null);
       appJotaiStore.set(userToFollowAtom, null);
       this.collaborators = new Map();
       this.excalidrawAPI.updateScene({
@@ -526,6 +551,7 @@ class Collab extends PureComponent<CollabProps, CollabState> {
 
   startCollaboration = async (
     existingRoomLinkData: null | { roomId: string; roomKey: string },
+    createOptions?: { roomName: string; creatorName: string },
   ) => {
     if (!this.state.username) {
       import("@excalidraw/random-username").then(({ getRandomUsername }) => {
@@ -582,6 +608,15 @@ class Collab extends PureComponent<CollabProps, CollabState> {
         }),
         roomId,
         roomKey,
+        existingRoomLinkData
+          ? null
+          : {
+              roomName: createOptions?.roomName?.trim() || "Session sans nom",
+              creatorName:
+                createOptions?.creatorName?.trim() ||
+                this.state.username ||
+                "Anonyme",
+            },
       );
 
       this.portal.socket.once("connect_error", fallbackInitializationHandler);
@@ -739,6 +774,14 @@ class Collab extends PureComponent<CollabProps, CollabState> {
         roomLinkData: existingRoomLinkData,
       });
       scenePromise.resolve(sceneData);
+    });
+
+    // server rejected the join (stale/incorrect link) — the actual
+    // cleanup/popup happens in onRoomNotFound() via Portal's listener;
+    // this only unblocks whoever is awaiting the scene so the app doesn't
+    // stay stuck on "loading" forever
+    this.portal.socket.on("room-not-found", () => {
+      scenePromise.resolve(null);
     });
 
     this.portal.socket.on(

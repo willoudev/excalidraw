@@ -118,6 +118,15 @@
         align-items: center;
         justify-content: center;
       }
+
+      &__form {
+        width: 100%;
+      }
+
+      &__error {
+        font-size: 0.8rem;
+        color: var(--color-danger, #e03131);
+      }
     }
 
     &__active {
@@ -131,6 +140,14 @@
 
       &__header {
         margin: 0;
+      }
+
+      &__creator {
+        margin-top: -0.75rem;
+        font-size: 0.8rem;
+        text-align: center;
+        color: var(--text-primary-color);
+        opacity: 0.7;
       }
 
       &__linkRow {

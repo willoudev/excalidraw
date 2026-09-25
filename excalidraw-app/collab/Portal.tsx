@@ -34,7 +34,12 @@ class Portal {
     this.collab = collab;
   }
 
-  open(socket: Socket, id: string, key: string) {
+  open(
+    socket: Socket,
+    id: string,
+    key: string,
+    creation: { roomName: string; creatorName: string } | null,
+  ) {
     this.socket = socket;
     this.roomId = id;
     this.roomKey = key;
@@ -42,7 +47,15 @@ class Portal {
     // Initialize socket listeners
     this.socket.on("init-room", () => {
       if (this.socket) {
-        this.socket.emit("join-room", this.roomId);
+        if (creation) {
+          this.socket.emit("create-room", {
+            roomID: this.roomId,
+            roomName: creation.roomName,
+            creatorName: creation.creatorName,
+          });
+        } else {
+          this.socket.emit("join-room", this.roomId);
+        }
         trackEvent("share", "room joined");
       }
     });
@@ -59,6 +72,15 @@ class Portal {
     this.socket.on("room-closed", () => {
       this.collab.onRoomClosed();
     });
+    this.socket.on("room-not-found", () => {
+      this.collab.onRoomNotFound();
+    });
+    this.socket.on(
+      "room-info",
+      (info: { name: string; creatorName: string }) => {
+        this.collab.setRoomInfo(info);
+      },
+    );
 
     return socket;
   }

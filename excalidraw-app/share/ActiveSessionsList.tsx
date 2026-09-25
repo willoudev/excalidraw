@@ -10,7 +10,12 @@ import {
 
 import "./ActiveSessionsList.scss";
 
-type ActiveRoom = { roomId: string; count: number };
+type ActiveRoom = {
+  roomId: string;
+  count: number;
+  name: string | null;
+  creatorName: string | null;
+};
 
 const fetchActiveRooms = async (): Promise<ActiveRoom[] | null> => {
   try {
@@ -110,7 +115,7 @@ export const ActiveSessionsList = () => {
                     }}
                   >
                     <span className="ActiveSessionsList__item__name">
-                      {entry.roomId.slice(0, 8)}…
+                      {room?.name ?? `${entry.roomId.slice(0, 8)}…`}
                     </span>
                     <span className="ActiveSessionsList__item__count">
                       {room?.count ?? 0} participant
@@ -138,7 +143,8 @@ export const ActiveSessionsList = () => {
               <li key={room.roomId}>
                 <div className="ActiveSessionsList__item">
                   <span className="ActiveSessionsList__item__name">
-                    {room.roomId.slice(0, 8)}…
+                    {room.name ?? `${room.roomId.slice(0, 8)}…`}
+                    {room.creatorName ? ` · ${room.creatorName}` : ""}
                   </span>
                   <span className="ActiveSessionsList__item__count">
                     {room.count} participant{room.count > 1 ? "s" : ""}

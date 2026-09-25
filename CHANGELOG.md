@@ -6,6 +6,36 @@ sur laquelle ce fork est basé (`packages/excalidraw/package.json`), et
 `Custom-X.Y.Z` suit nos propres changements par-dessus. `Custom` repart à
 `1.0.0` à chaque fois que la base Excalidraw est resynchronisée.
 
+## Excalidraw-0.18.0+Custom-1.7.0 — 2026-09-25
+
+- Refonte de la collaboration en direct :
+  - Le bouton "Partage" s'appelle désormais "Collaboration".
+  - Le popup "Collaboration en direct" propose deux actions claires :
+    **Démarrer une session** (avec un nom de session + votre nom) et
+    **Se connecter à une session en cours** (en collant le lien reçu).
+  - Les rooms doivent maintenant être explicitement créées côté serveur
+    (`excalidraw-room`, événement `create-room` avec nom + créateur,
+    stocké en mémoire uniquement — jamais la clé de chiffrement E2E).
+    Si quelqu'un ouvre un lien vers une room qui n'a jamais été créée ou
+    qui a été fermée (via "Fermer pour tout le monde"), il voit
+    désormais un popup **"Session partagée fermée"** au lieu d'entrer
+    dans une room vide (`excalidraw-room/src/index.ts`,
+    `excalidraw-app/collab/{Portal,Collab}.tsx`,
+    `excalidraw-app/collab/RoomClosedDialog.tsx`).
+    ⚠️ Effet de bord accepté : si le serveur `excalidraw-room` redémarre
+    (ex. mise en veille du plan gratuit Render), ce registre en mémoire
+    est perdu et les liens de sessions ouvertes avant le redémarrage
+    affichent ce popup même si personne ne les a explicitement fermées
+    — il suffit de démarrer une nouvelle session et repartager le lien.
+  - Le nom de la session et son créateur sont affichés en haut du popup
+    une fois la session active.
+  - La liste "sessions actives" (mes sessions / toutes les sessions du
+    serveur / sessions enregistrées Firestore) — qui expose les rooms
+    d'éventuels autres utilisateurs — est désormais masquée par défaut
+    et ne s'affiche qu'en appuyant sur **MAJ+9** trois fois de suite
+    pendant que le popup est ouvert ; elle se remasque à chaque
+    fermeture/réouverture du popup (`excalidraw-app/share/ShareDialog.tsx`).
+
 ## Excalidraw-0.18.0+Custom-1.6.0 — 2026-09-25
 
 - Après avoir dessiné un rectangle, losange ou ellipse, le focus

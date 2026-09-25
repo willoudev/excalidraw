@@ -18,7 +18,8 @@ import { KEYS, getFrame } from "@excalidraw/common";
 import { useEffect, useRef, useState } from "react";
 
 import { atom, useAtom, useAtomValue } from "../app-jotai";
-import { activeRoomLinkAtom } from "../collab/Collab";
+import { activeRoomInfoAtom, activeRoomLinkAtom } from "../collab/Collab";
+import { getCollaborationLinkData } from "../data";
 
 import { ActiveSessionsList } from "./ActiveSessionsList";
 
@@ -68,6 +69,7 @@ const ActiveRoomDialog = ({
   const ref = useRef<HTMLInputElement>(null);
   const isShareSupported = "share" in navigator;
   const { onCopy, copyStatus } = useCopyStatus();
+  const roomInfo = useAtomValue(activeRoomInfoAtom);
 
   const copyRoomLink = async () => {
     try {
@@ -104,8 +106,15 @@ const ActiveRoomDialog = ({
   return (
     <>
       <h3 className="ShareDialog__active__header">
-        {t("labels.liveCollaboration").replace(/\./g, "")}
+        {roomInfo
+          ? roomInfo.name
+          : t("labels.liveCollaboration").replace(/\./g, "")}
       </h3>
+      {roomInfo && (
+        <div className="ShareDialog__active__creator">
+          Créée par {roomInfo.creatorName}
+        </div>
+      )}
       <TextField
         defaultValue={collabAPI.getUsername()}
         placeholder="Your name"
@@ -199,7 +208,77 @@ const ShareDialogPicker = (props: ShareDialogProps) => {
 
   const { collabAPI } = props;
 
-  const startCollabJSX = collabAPI ? (
+  const [mode, setMode] = useState<"idle" | "starting" | "joining">("idle");
+  const [roomNameInput, setRoomNameInput] = useState("");
+  const [creatorNameInput, setCreatorNameInput] = useState(
+    () => collabAPI?.getUsername() ?? "",
+  );
+  const [joinLinkInput, setJoinLinkInput] = useState("");
+  const [joinError, setJoinError] = useState<string | null>(null);
+
+  // "rooms actives" (server-wide, other people's sessions) stays hidden
+  // unless MAJ (Shift) + 9 is pressed three times in a row while this
+  // dialog is open — resets to hidden every time the dialog is reopened,
+  // since this component remounts fresh then
+  const [showActiveSessions, setShowActiveSessions] = useState(false);
+  const shiftNineCountRef = useRef(0);
+  const lastShiftNineRef = useRef(0);
+
+  useEffect(() => {
+    if (props.type !== "share" || showActiveSessions) {
+      return;
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.shiftKey && event.code === "Digit9")) {
+        return;
+      }
+      const now = Date.now();
+      if (now - lastShiftNineRef.current > 1500) {
+        shiftNineCountRef.current = 0;
+      }
+      lastShiftNineRef.current = now;
+      shiftNineCountRef.current += 1;
+      if (shiftNineCountRef.current >= 3) {
+        setShowActiveSessions(true);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [props.type, showActiveSessions]);
+
+  if (!collabAPI) {
+    return null;
+  }
+
+  const handleStart = () => {
+    trackEvent("share", "room creation", `ui (${getFrame()})`);
+    if (creatorNameInput.trim()) {
+      collabAPI.setUsername(creatorNameInput);
+    }
+    collabAPI.startCollaboration(null, {
+      roomName: roomNameInput,
+      creatorName: creatorNameInput,
+    });
+  };
+
+  const handleJoin = () => {
+    const link = joinLinkInput.trim();
+    if (!link) {
+      return;
+    }
+    try {
+      const data = getCollaborationLinkData(link);
+      if (!data) {
+        setJoinError("Ce lien ne contient pas de session de collaboration.");
+        return;
+      }
+      window.location.href = link;
+    } catch {
+      setJoinError("Lien invalide.");
+    }
+  };
+
+  return (
     <>
       <div className="ShareDialog__picker__header">
         {t("labels.liveCollaboration").replace(/\./g, "")}
@@ -210,31 +289,86 @@ const ShareDialogPicker = (props: ShareDialogProps) => {
         {t("roomDialog.desc_privacy")}
       </div>
 
-      <div className="ShareDialog__picker__button">
+      <div
+        className="ShareDialog__picker__button"
+        style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}
+      >
         <FilledButton
           size="large"
-          label={t("roomDialog.button_startSession")}
+          label="Démarrer une session"
           icon={playerPlayIcon}
-          onClick={() => {
-            trackEvent("share", "room creation", `ui (${getFrame()})`);
-            collabAPI.startCollaboration(null);
-          }}
+          onClick={() =>
+            setMode((current) => (current === "starting" ? "idle" : "starting"))
+          }
+        />
+        <FilledButton
+          size="large"
+          variant="outlined"
+          label="Se connecter à une session en cours"
+          onClick={() =>
+            setMode((current) => (current === "joining" ? "idle" : "joining"))
+          }
         />
       </div>
 
-      {props.type === "share" && (
-        <div className="ShareDialog__separator">
-          <span>{t("shareDialog.or")}</span>
+      {mode === "starting" && (
+        <div
+          className="ShareDialog__picker__form"
+          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+        >
+          <TextField
+            label="Nom de la session"
+            placeholder="Ex : Réunion équipe produit"
+            value={roomNameInput}
+            onChange={setRoomNameInput}
+            onKeyDown={(event) => event.key === KEYS.ENTER && handleStart()}
+          />
+          <TextField
+            label="Votre nom"
+            placeholder="Votre nom"
+            value={creatorNameInput}
+            onChange={setCreatorNameInput}
+            onKeyDown={(event) => event.key === KEYS.ENTER && handleStart()}
+          />
+          <FilledButton
+            size="large"
+            label="Démarrer"
+            icon={playerPlayIcon}
+            onClick={handleStart}
+          />
         </div>
       )}
-    </>
-  ) : null;
 
-  return (
-    <>
-      {startCollabJSX}
+      {mode === "joining" && (
+        <div
+          className="ShareDialog__picker__form"
+          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+        >
+          <TextField
+            label="Lien de la session"
+            placeholder="Collez le lien d'invitation reçu"
+            value={joinLinkInput}
+            onChange={(value) => {
+              setJoinLinkInput(value);
+              setJoinError(null);
+            }}
+            onKeyDown={(event) => event.key === KEYS.ENTER && handleJoin()}
+          />
+          {joinError && (
+            <div className="ShareDialog__picker__error">{joinError}</div>
+          )}
+          <FilledButton size="large" label="Rejoindre" onClick={handleJoin} />
+        </div>
+      )}
 
-      {props.type === "share" && <ActiveSessionsList />}
+      {showActiveSessions && (
+        <>
+          <div className="ShareDialog__separator">
+            <span>{t("shareDialog.or")}</span>
+          </div>
+          <ActiveSessionsList />
+        </>
+      )}
     </>
   );
 };

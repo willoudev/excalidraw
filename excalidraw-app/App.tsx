@@ -97,8 +97,10 @@ import Collab, {
   collabAPIAtom,
   isCollaboratingAtom,
   isOfflineAtom,
+  roomNotFoundAtom,
   userToFollowAtom,
 } from "./collab/Collab";
+import { RoomClosedDialog } from "./collab/RoomClosedDialog";
 import { AppFooter } from "./components/AppFooter";
 import { AppMainMenu } from "./components/AppMainMenu";
 import { AppWelcomeScreen } from "./components/AppWelcomeScreen";
@@ -411,6 +413,7 @@ const ExcalidrawWrapper = () => {
   });
   const collabError = useAtomValue(collabErrorIndicatorAtom);
   const userToFollow = useAtomValue(userToFollowAtom);
+  const [roomNotFound, setRoomNotFound] = useAtom(roomNotFoundAtom);
 
   const viewportStatusFrame = useMemo(
     () =>
@@ -1072,6 +1075,9 @@ const ExcalidrawWrapper = () => {
             setErrorMessage={setErrorMessage}
           />
         )}
+        {roomNotFound && (
+          <RoomClosedDialog onClose={() => setRoomNotFound(false)} />
+        )}
         {excalidrawAPI && !isCollabDisabled && (
           <Collab excalidrawAPI={excalidrawAPI} />
         )}
@@ -1130,7 +1136,7 @@ const ExcalidrawWrapper = () => {
               },
             },
             {
-              label: t("labels.share"),
+              label: "Collaboration",
               category: DEFAULT_CATEGORIES.app,
               predicate: true,
               icon: share,
