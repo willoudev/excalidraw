@@ -52,6 +52,7 @@ class Portal {
             roomID: this.roomId,
             roomName: creation.roomName,
             creatorName: creation.creatorName,
+            roomKey: this.roomKey,
           });
         } else {
           this.socket.emit("join-room", this.roomId);

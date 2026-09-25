@@ -6,6 +6,26 @@ sur laquelle ce fork est basé (`packages/excalidraw/package.json`), et
 `Custom-X.Y.Z` suit nos propres changements par-dessus. `Custom` repart à
 `1.0.0` à chaque fois que la base Excalidraw est resynchronisée.
 
+## Excalidraw-0.18.0+Custom-1.8.0 — 2026-09-25
+
+- Les sessions listées dans "Toutes les sessions actives sur le
+  serveur" sont désormais cliquables pour les rejoindre directement,
+  comme "Mes sessions actives".
+  ⚠️ Changement volontaire de modèle de sécurité, choisi explicitement :
+  pour permettre ça, le serveur `excalidraw-room` mémorise maintenant
+  aussi la clé de chiffrement E2E de chaque session créée (envoyée à
+  la création via `create-room`, renvoyée par `GET /rooms`), alors
+  qu'il ne l'a jamais eue jusqu'ici. Adapté à un usage personnel/mono-
+  utilisateur : n'importe qui atteint le popup (déverrouillé par
+  MAJ+9x3) peut désormais rejoindre n'importe quelle session active en
+  un clic, sans avoir besoin du lien d'invitation. `GET /rooms` n'a
+  pas d'authentification propre au-delà de `CORS_ORIGIN` — à garder en
+  tête si l'accès à l'appli est un jour élargi à d'autres personnes
+  (`excalidraw-room/src/index.ts`, `excalidraw-app/collab/Portal.tsx`,
+  `excalidraw-app/share/ActiveSessionsList.tsx`). Les sessions créées
+  avant ce changement (redémarrage du serveur compris) n'ont pas cette
+  clé enregistrée et restent affichées en lecture seule.
+
 ## Excalidraw-0.18.0+Custom-1.7.1 — 2026-09-25
 
 - Correction : `GET /rooms` (`excalidraw-room`) listait les sessions
