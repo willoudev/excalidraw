@@ -12514,6 +12514,23 @@ class App extends React.Component<AppProps, AppState> {
           () => this.cursor.refreshHover(),
         );
       }
+
+      // immediately start typing a centered label into a freshly drawn
+      // shape, instead of leaving it selected — otherwise the next
+      // keystrokes get swallowed as tool shortcuts, which is jarring
+      if (
+        newElement &&
+        !this.isToolLocked() &&
+        !isArrowElement(newElement) &&
+        isTextBindableContainer(newElement, false) &&
+        !isInvisiblySmallElement(newElement)
+      ) {
+        this.startTextEditing({
+          sceneX: newElement.x + newElement.width / 2,
+          sceneY: newElement.y + newElement.height / 2,
+          container: newElement,
+        });
+      }
     });
   }
 

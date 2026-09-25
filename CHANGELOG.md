@@ -6,6 +6,24 @@ sur laquelle ce fork est basé (`packages/excalidraw/package.json`), et
 `Custom-X.Y.Z` suit nos propres changements par-dessus. `Custom` repart à
 `1.0.0` à chaque fois que la base Excalidraw est resynchronisée.
 
+## Excalidraw-0.18.0+Custom-1.6.0 — 2026-09-25
+
+- Après avoir dessiné un rectangle, losange ou ellipse, le focus
+  passe automatiquement en mode édition de texte à l'intérieur de la
+  forme (centré horizontalement et verticalement) — même mécanisme
+  que les stickynotes, désormais étendu aux formes génériques.
+  Auparavant, taper au clavier juste après avoir créé une forme
+  déclenchait les raccourcis clavier des menus au lieu d'écrire du
+  texte. Ignoré si l'outil est verrouillé (dessin en rafale) — même
+  garde-fou que pour les stickynotes
+  (`packages/excalidraw/components/App.tsx`).
+  ⚠️ Changement de comportement volontaire par rapport à l'upstream :
+  fait échouer ~41 tests de la suite historique d'Excalidraw qui
+  supposaient qu'une forme reste "juste sélectionnée" après création.
+  Ces tests ne font pas partie du pipeline de déploiement et n'ont
+  pas été mis à jour un par un (ils testent l'ancien comportement,
+  intentionnellement remplacé).
+
 ## Excalidraw-0.18.0+Custom-1.5.0 — 2026-09-24
 
 - "Ouvrir un fichier" (`Ctrl/Cmd+O` et menu) importe désormais le
