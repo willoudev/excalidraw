@@ -19,9 +19,12 @@ import { useEffect, useRef, useState } from "react";
 
 import { atom, useAtom, useAtomValue } from "../app-jotai";
 import { activeRoomInfoAtom, activeRoomLinkAtom } from "../collab/Collab";
+import { fetchActiveRooms, verifyAccessCode } from "../data/activeRooms";
 import { getCollaborationLinkData } from "../data";
 
 import { ActiveSessionsList } from "./ActiveSessionsList";
+
+import type { ActiveRoom } from "../data/activeRooms";
 
 import "./ShareDialog.scss";
 import { QRCode } from "./QRCode";
@@ -33,6 +36,8 @@ type ShareDialogType = "share" | "collaborationOnly";
 export const shareDialogStateAtom = atom<
   { isOpen: false } | { isOpen: true; type: ShareDialogType }
 >({ isOpen: false });
+
+export const wrongAccessCodeAtom = atom(false);
 
 const getShareIcon = () => {
   const navigator = window.navigator as any;
@@ -69,6 +74,8 @@ const ActiveRoomDialog = ({
   const ref = useRef<HTMLInputElement>(null);
   const isShareSupported = "share" in navigator;
   const { onCopy, copyStatus } = useCopyStatus();
+  const { onCopy: onCopyAccessCode, copyStatus: accessCodeCopyStatus } =
+    useCopyStatus();
   const roomInfo = useAtomValue(activeRoomInfoAtom);
 
   const copyRoomLink = async () => {
@@ -89,6 +96,17 @@ const ActiveRoomDialog = ({
     }, 3000);
 
     ref.current?.select();
+  };
+
+  const copyAccessCode = async () => {
+    if (!roomInfo?.accessCode) {
+      return;
+    }
+    try {
+      await copyTextToSystemClipboard(roomInfo.accessCode);
+    } catch (e) {
+      collabAPI.setCollabError(t("errors.copyToSystemClipboardFailed"));
+    }
   };
 
   const shareRoomLink = async () => {
@@ -151,6 +169,26 @@ const ActiveRoomDialog = ({
           }}
         />
       </div>
+      {roomInfo?.accessCode && (
+        <div className="ShareDialog__active__linkRow">
+          <TextField
+            label="Code d'accès"
+            readonly
+            fullWidth
+            value={roomInfo.accessCode}
+          />
+          <FilledButton
+            size="large"
+            label={t("buttons.copyLink")}
+            icon={copyIcon}
+            status={accessCodeCopyStatus}
+            onClick={() => {
+              copyAccessCode();
+              onCopyAccessCode();
+            }}
+          />
+        </div>
+      )}
       <QRCode value={activeRoomLink} />
       <div className="ShareDialog__active__description">
         <p>
@@ -216,6 +254,13 @@ const ShareDialogPicker = (props: ShareDialogProps) => {
   const [joinLinkInput, setJoinLinkInput] = useState("");
   const [joinError, setJoinError] = useState<string | null>(null);
 
+  const [codeRooms, setCodeRooms] = useState<ActiveRoom[] | null>(null);
+  const [codeRoomsLoading, setCodeRoomsLoading] = useState(false);
+  const [codeRoomId, setCodeRoomId] = useState("");
+  const [codeInput, setCodeInput] = useState("");
+  const [codeVerifying, setCodeVerifying] = useState(false);
+  const [, setWrongAccessCode] = useAtom(wrongAccessCodeAtom);
+
   // "rooms actives" (server-wide, other people's sessions) stays hidden
   // unless MAJ (Shift) + 9 is pressed three times in a row while this
   // dialog is open — resets to hidden every time the dialog is reopened,
@@ -246,6 +291,23 @@ const ShareDialogPicker = (props: ShareDialogProps) => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [props.type, showActiveSessions]);
 
+  useEffect(() => {
+    if (mode !== "joining") {
+      return;
+    }
+    let cancelled = false;
+    setCodeRoomsLoading(true);
+    fetchActiveRooms().then((rooms) => {
+      if (!cancelled) {
+        setCodeRooms(rooms);
+        setCodeRoomsLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [mode]);
+
   if (!collabAPI) {
     return null;
   }
@@ -275,6 +337,21 @@ const ShareDialogPicker = (props: ShareDialogProps) => {
       window.location.href = link;
     } catch {
       setJoinError("Lien invalide.");
+    }
+  };
+
+  const handleJoinWithCode = async () => {
+    const code = codeInput.trim();
+    if (!codeRoomId || !code || codeVerifying) {
+      return;
+    }
+    setCodeVerifying(true);
+    const result = await verifyAccessCode(codeRoomId, code);
+    setCodeVerifying(false);
+    if (result.success) {
+      window.location.href = result.link;
+    } else {
+      setWrongAccessCode(true);
     }
   };
 
@@ -358,6 +435,53 @@ const ShareDialogPicker = (props: ShareDialogProps) => {
             <div className="ShareDialog__picker__error">{joinError}</div>
           )}
           <FilledButton size="large" label="Rejoindre" onClick={handleJoin} />
+
+          <div className="ShareDialog__separator">
+            <span>{t("shareDialog.or")}</span>
+          </div>
+
+          <div className="ShareDialog__picker__codeJoinLabel">
+            Tu as un code d'accès ? Choisis la session et saisis le code.
+          </div>
+          {codeRoomsLoading ? (
+            <div className="ActiveSessionsList__loading">
+              {t("labels.loadingScene")}
+            </div>
+          ) : !codeRooms || codeRooms.length === 0 ? (
+            <div className="ActiveSessionsList__empty">
+              Aucune session active pour le moment.
+            </div>
+          ) : (
+            <>
+              <select
+                className="ShareDialog__picker__select"
+                value={codeRoomId}
+                onChange={(event) => setCodeRoomId(event.target.value)}
+              >
+                <option value="">Choisir une session…</option>
+                {codeRooms.map((room) => (
+                  <option key={room.roomId} value={room.roomId}>
+                    {room.name ?? `${room.roomId.slice(0, 8)}…`}
+                    {room.creatorName ? ` · ${room.creatorName}` : ""}
+                  </option>
+                ))}
+              </select>
+              <TextField
+                label="Code d'accès"
+                placeholder="Ex : 123456"
+                value={codeInput}
+                onChange={setCodeInput}
+                onKeyDown={(event) =>
+                  event.key === KEYS.ENTER && handleJoinWithCode()
+                }
+              />
+              <FilledButton
+                size="large"
+                label={codeVerifying ? "Vérification…" : "Rejoindre avec le code"}
+                onClick={handleJoinWithCode}
+              />
+            </>
+          )}
         </div>
       )}
 
@@ -393,8 +517,25 @@ const ShareDialogInner = (props: ShareDialogProps) => {
   );
 };
 
+const WrongAccessCodeDialog = ({ onClose }: { onClose: () => void }) => (
+  <Dialog
+    size="small"
+    onCloseRequest={onClose}
+    title="Code d'accès incorrect"
+  >
+    <p>
+      Le code d'accès saisi ne correspond pas à cette session. Vérifie-le et
+      réessaie.
+    </p>
+    <div style={{ display: "flex", justifyContent: "center" }}>
+      <FilledButton size="large" label="Fermer" onClick={onClose} />
+    </div>
+  </Dialog>
+);
+
 export const ShareDialog = (props: { collabAPI: CollabAPI | null }) => {
   const [shareDialogState, setShareDialogState] = useAtom(shareDialogStateAtom);
+  const [wrongAccessCode, setWrongAccessCode] = useAtom(wrongAccessCodeAtom);
 
   const { openDialog } = useUIAppState();
 
@@ -404,15 +545,18 @@ export const ShareDialog = (props: { collabAPI: CollabAPI | null }) => {
     }
   }, [openDialog, setShareDialogState]);
 
-  if (!shareDialogState.isOpen) {
-    return null;
-  }
-
   return (
-    <ShareDialogInner
-      handleClose={() => setShareDialogState({ isOpen: false })}
-      collabAPI={props.collabAPI}
-      type={shareDialogState.type}
-    />
+    <>
+      {shareDialogState.isOpen && (
+        <ShareDialogInner
+          handleClose={() => setShareDialogState({ isOpen: false })}
+          collabAPI={props.collabAPI}
+          type={shareDialogState.type}
+        />
+      )}
+      {wrongAccessCode && (
+        <WrongAccessCodeDialog onClose={() => setWrongAccessCode(false)} />
+      )}
+    </>
   );
 };

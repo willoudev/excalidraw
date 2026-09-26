@@ -6,6 +6,39 @@ sur laquelle ce fork est basé (`packages/excalidraw/package.json`), et
 `Custom-X.Y.Z` suit nos propres changements par-dessus. `Custom` repart à
 `1.0.0` à chaque fois que la base Excalidraw est resynchronisée.
 
+## Excalidraw-0.18.0+Custom-1.10.0 — 2026-09-26
+
+- À la création d'une session partagée, en plus du lien on génère
+  maintenant aussi un **code d'accès** à 6 chiffres, affiché et
+  copiable dans la boîte de dialogue de la session active.
+  - Avec le **lien**, on rejoint la session directement si elle est
+    active (comportement inchangé).
+  - Avec le **code** (sans le lien), on ouvre "Se connecter à une
+    session en cours", on choisit la session dans la liste des
+    sessions actives, on saisit le code, et on rejoint si le code est
+    bon. Si le code est faux, une popup "Code d'accès incorrect"
+    s'affiche.
+  - ⚠️ Ce changement annule la fonctionnalité de la version 1.8.0 qui
+    permettait de rejoindre directement en cliquant sur une session
+    listée dans "Toutes les sessions actives sur le serveur" : cette
+    liste redevient purement informative (nom, créateur, nombre de
+    participants), puisqu'elle ne doit plus jamais exposer la clé de
+    chiffrement de bout en bout sans passer par la vérification du
+    code d'accès. Rejoindre depuis cette liste se fait maintenant via
+    le nouveau flux "code d'accès".
+  - Côté serveur (`excalidraw-room`), la clé de chiffrement de la
+    session reste stockée (comme choisi en 1.8.0, pour l'usage
+    personnel), mais `GET /rooms` ne l'expose plus jamais : elle n'est
+    renvoyée qu'après vérification du code via un nouvel événement
+    Socket.IO dédié (`join-with-code` → `access-code-verified` /
+    `access-code-invalid`).
+  - Corrige au passage un bug de UX découvert pendant les tests : les
+    popups "Session partagée fermée" et "Code d'accès incorrect"
+    n'avaient aucun bouton (donc aucun élément focusable), ce qui fait
+    qu'Échap fermait par erreur la boîte de dialogue derrière elles au
+    lieu de la popup elle-même, laissant celle-ci bloquée à l'écran.
+    Les deux ont maintenant un bouton "Fermer" explicite.
+
 ## Excalidraw-0.18.0+Custom-1.9.1 — 2026-09-25
 
 - Refonte du mindmap inséré par "Insérer un mindmap" pour ressembler à

@@ -127,6 +127,24 @@
         font-size: 0.8rem;
         color: var(--color-danger, #e03131);
       }
+
+      &__codeJoinLabel {
+        font-size: 0.8rem;
+        color: var(--text-primary-color);
+        opacity: 0.8;
+      }
+
+      &__select {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0.6rem 0.75rem;
+        border-radius: var(--border-radius-lg, 0.5rem);
+        border: 1px solid var(--dialog-border-color);
+        background: var(--island-bg-color);
+        color: var(--text-primary-color);
+        font-family: inherit;
+        font-size: 0.9rem;
+      }
     }
 
     &__active {

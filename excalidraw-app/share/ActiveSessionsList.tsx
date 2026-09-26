@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import { useI18n } from "@excalidraw/excalidraw/i18n";
 
-import { getCollaborationLink } from "../data";
+import { fetchActiveRooms, type ActiveRoom } from "../data/activeRooms";
 import { listStoredRooms, type StoredRoom } from "../data/firebase";
 import {
   getSessionHistory,
@@ -10,34 +10,6 @@ import {
 } from "../data/SessionHistory";
 
 import "./ActiveSessionsList.scss";
-
-type ActiveRoom = {
-  roomId: string;
-  count: number;
-  name: string | null;
-  creatorName: string | null;
-  // present when the server was told to also remember the room's E2E
-  // key at creation time (see excalidraw-room's create-room handler) —
-  // lets any session in this list be joined with one click, at the cost
-  // of the server holding the key. Absent/empty for rooms created
-  // before that, which stay informational-only here.
-  roomKey: string | null;
-};
-
-const fetchActiveRooms = async (): Promise<ActiveRoom[] | null> => {
-  try {
-    const res = await fetch(
-      `${import.meta.env.VITE_APP_WS_SERVER_URL}/rooms`,
-    );
-    if (!res.ok) {
-      return null;
-    }
-    const data = await res.json();
-    return Array.isArray(data.rooms) ? data.rooms : [];
-  } catch {
-    return null;
-  }
-};
 
 export const ActiveSessionsList = () => {
   const { t } = useI18n();
@@ -146,9 +118,9 @@ export const ActiveSessionsList = () => {
           </div>
         ) : (
           <ul className="ActiveSessionsList__list">
-            {activeRooms.map((room) => {
-              const label = (
-                <>
+            {activeRooms.map((room) => (
+              <li key={room.roomId}>
+                <div className="ActiveSessionsList__item">
                   <span className="ActiveSessionsList__item__name">
                     {room.name ?? `${room.roomId.slice(0, 8)}…`}
                     {room.creatorName ? ` · ${room.creatorName}` : ""}
@@ -156,31 +128,15 @@ export const ActiveSessionsList = () => {
                   <span className="ActiveSessionsList__item__count">
                     {room.count} participant{room.count > 1 ? "s" : ""}
                   </span>
-                </>
-              );
-              return (
-                <li key={room.roomId}>
-                  {room.roomKey ? (
-                    <button
-                      type="button"
-                      className="ActiveSessionsList__item ActiveSessionsList__item--clickable"
-                      onClick={() => {
-                        window.location.href = getCollaborationLink({
-                          roomId: room.roomId,
-                          roomKey: room.roomKey!,
-                        });
-                      }}
-                    >
-                      {label}
-                    </button>
-                  ) : (
-                    <div className="ActiveSessionsList__item">{label}</div>
-                  )}
-                </li>
-              );
-            })}
+                </div>
+              </li>
+            ))}
           </ul>
         )}
+        <div className="ActiveSessionsList__empty" style={{ marginTop: 4 }}>
+          Pour rejoindre l'une de ces sessions, utilise "Se connecter à une
+          session en cours" avec son code d'accès.
+        </div>
       </div>
 
       <div className="ActiveSessionsList__section">

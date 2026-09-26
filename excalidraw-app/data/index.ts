@@ -71,6 +71,15 @@ const generateRoomId = async () => {
   return bytesToHexString(buffer);
 };
 
+/** A short, human-shareable access code (verbally, by chat…) that gates
+ * joining a session from the active-sessions list instead of a link —
+ * distinct from the E2E encryption key, which stays link-only. */
+export const generateAccessCode = () => {
+  const buffer = new Uint32Array(1);
+  window.crypto.getRandomValues(buffer);
+  return String(buffer[0] % 1000000).padStart(6, "0");
+};
+
 export type EncryptedData = {
   data: ArrayBuffer;
   iv: Uint8Array;

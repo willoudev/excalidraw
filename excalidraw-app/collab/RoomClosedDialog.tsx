@@ -1,4 +1,5 @@
 import { Dialog } from "@excalidraw/excalidraw/components/Dialog";
+import { FilledButton } from "@excalidraw/excalidraw/components/FilledButton";
 
 export const RoomClosedDialog = ({ onClose }: { onClose: () => void }) => {
   return (
@@ -7,6 +8,9 @@ export const RoomClosedDialog = ({ onClose }: { onClose: () => void }) => {
         Ce lien de collaboration n'est plus valide : la session a été fermée
         par son créateur, ou n'a jamais existé.
       </p>
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <FilledButton size="large" label="Fermer" onClick={onClose} />
+      </div>
     </Dialog>
   );
 };

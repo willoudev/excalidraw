@@ -38,7 +38,11 @@ class Portal {
     socket: Socket,
     id: string,
     key: string,
-    creation: { roomName: string; creatorName: string } | null,
+    creation: {
+      roomName: string;
+      creatorName: string;
+      accessCode: string;
+    } | null,
   ) {
     this.socket = socket;
     this.roomId = id;
@@ -53,6 +57,7 @@ class Portal {
             roomName: creation.roomName,
             creatorName: creation.creatorName,
             roomKey: this.roomKey,
+            accessCode: creation.accessCode,
           });
         } else {
           this.socket.emit("join-room", this.roomId);
@@ -78,7 +83,7 @@ class Portal {
     });
     this.socket.on(
       "room-info",
-      (info: { name: string; creatorName: string }) => {
+      (info: { name: string; creatorName: string; accessCode: string }) => {
         this.collab.setRoomInfo(info);
       },
     );

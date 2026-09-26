@@ -64,6 +64,7 @@ import {
   WS_EVENTS,
 } from "../app_constants";
 import {
+  generateAccessCode,
   generateCollaborationLinkData,
   getCollaborationLink,
   getSyncableElements,
@@ -113,6 +114,7 @@ export const activeRoomLinkAtom = atom<string | null>(null);
 export const activeRoomInfoAtom = atom<{
   name: string;
   creatorName: string;
+  accessCode: string;
 } | null>(null);
 export const roomNotFoundAtom = atom(false);
 export const userToFollowAtom = atom<UserToFollow | null>(null);
@@ -461,7 +463,9 @@ class Collab extends PureComponent<CollabProps, CollabState> {
     appJotaiStore.set(roomNotFoundAtom, true);
   };
 
-  setRoomInfo = (info: { name: string; creatorName: string } | null) => {
+  setRoomInfo = (
+    info: { name: string; creatorName: string; accessCode: string } | null,
+  ) => {
     appJotaiStore.set(activeRoomInfoAtom, info);
   };
 
@@ -616,6 +620,7 @@ class Collab extends PureComponent<CollabProps, CollabState> {
                 createOptions?.creatorName?.trim() ||
                 this.state.username ||
                 "Anonyme",
+              accessCode: generateAccessCode(),
             },
       );
 
